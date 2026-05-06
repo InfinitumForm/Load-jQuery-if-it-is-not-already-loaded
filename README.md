@@ -1,55 +1,109 @@
-# Load jQuery if it is not already loaded
-Best solution to load jQuery if is not already loaded.
-### How this work
-```
+# Load jQuery Safely (Only If Missing)
+
+Lightweight JavaScript utility for conditionally loading jQuery only when it is not already available on the page.
+
+Prevents duplicate loads, avoids conflicts, and guarantees a safe initialization point via callback.
+
+[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/V7V11XGEKH)
+
+---
+
+## Why use this?
+
+- Eliminates duplicate jQuery loading
+- Works with any CDN or self-hosted version
+- Safe fallback when jQuery is not present
+- Provides reliable callback when jQuery is ready
+- Zero dependencies
+
+---
+
+## Usage
+
+Add this script anywhere in your HTML (recommended: end of `<head>` or before `</body>`):
+
+```html
 <script type="text/javascript">
-	(function(url, position, callback){
-		// default values
-		url = url || 'https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js';
-		position = position || 0;
-		
-		// Check is jQuery exists
-		if (!window.jQuery) {
-			// Initialize <head>
-			var head = document.getElementsByTagName('head')[0];
-			// Create <script> element
-			var script = document.createElement("script");
-			// Append URL
-			script.src = url;
-			// Append type
-			script.type = 'text/javascript';
-			// Append script to <head>
-			head.appendChild(script);
-			// Move script on proper position
-			head.insertBefore(script,head.childNodes[position]);
-      
-			script.onload = function(){
-				if(typeof callback == 'function') {
-					callback(jQuery);
-				}
-			};
-		} else {
-			if(typeof callback == 'function') {
-				callback(jQuery);
-			}
-		}
-	}('https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js', 5, function($){ 
-		console.log($);
-	}));
+(function (url, position, callback) {
+    'use strict';
+
+    var head;
+    var script;
+    var referenceNode;
+
+    url = url || 'https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js';
+    position = Number.isInteger(position) ? position : 0;
+
+    if (window.jQuery) {
+        if (typeof callback === 'function') {
+            callback(window.jQuery);
+        }
+        return;
+    }
+
+    head = document.head || document.getElementsByTagName('head')[0];
+
+    if (!head) {
+        return;
+    }
+
+    script = document.createElement('script');
+    script.src = url;
+    script.type = 'text/javascript';
+    script.async = true;
+
+    script.onload = function () {
+        if (window.jQuery && typeof callback === 'function') {
+            callback(window.jQuery);
+        }
+    };
+
+    script.onerror = function () {
+        console.error('Failed to load jQuery from: ' + url);
+    };
+
+    referenceNode = head.childNodes[position] || null;
+    head.insertBefore(script, referenceNode);
+}(
+    'https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js',
+    0,
+    function ($) {
+        console.log('jQuery loaded:', $.fn.jquery);
+    }
+));
 </script>
 ```
 
-This function you can add anywhere in your HTML code (the best is on end of `<head>` or before `</body>`) and you don't need to warry is jquery already loaded or not. Generaly this function check is jQuery loaded and if is not it append jQuery library into your DOM and initialize it.
+---
 
-Function accept 2 arguments:
+## Parameters
 
-1. url - jQuery custom URL, can be hosted library or some CDN URL (Default is setup to version 3.3.1)
-2. position - position offset (integer) where you want to push your jQuery code (Default is 0 - first line of `<head>`)
+| Parameter | Type     | Description |
+|----------|----------|------------|
+| `url`     | string   | URL to jQuery (CDN or local). Default: Google CDN (3.7.1) |
+| `position`| integer  | Index position inside `<head>` where script is inserted |
+| `callback`| function | Optional callback executed when jQuery is ready |
 
-Function also return callback what you can define with `$` to initialize jQuery. Callback is not important and you can avoid it.
+---
 
-NOTE: It can happen that yu see in console some errors like `Uncaught ReferenceError: jQuery is not defined` or `Uncaught ReferenceError: $ is not defined` but jQuery should work fine when this function append code into your DOM.
+## How it works
 
-This is still on testing phase but you can comment and report issue if you find.
+1. Checks if `window.jQuery` already exists
+2. If exists → immediately executes callback
+3. If not → dynamically injects `<script>` into `<head>`
+4. Waits for `onload`
+5. Executes callback with jQuery instance
 
-Also you can involve into development and help me to build best solution for all.
+---
+
+## Notes
+
+- Callback is optional but recommended for safe execution
+- Safe to include multiple times (will not reload jQuery if already present)
+- Works across modern browsers
+
+---
+
+## License
+
+MIT
