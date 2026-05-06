@@ -1,37 +1,53 @@
-/**
- * Define jQuery if is not already defined
- *
- * @autor    Ivijan-Sefan Stipic
- * @version  1.0.0
-**/
-(function(url, position, callback){
-	// default values
-	url = url || 'https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js';
-	position = position || 0;
+(function (url, position, callback) {
+	'use strict';
 
-	// Check is jQuery exists
-	if (!window.jQuery) {
-		// Initialize <head>
-		var head = document.getElementsByTagName('head')[0];
-		// Create <script> element
-		var script = document.createElement("script");
-		// Append URL
-		script.src = url;
-		// Append type
-		script.type = 'text/javascript';
-		// Append script to <head>
-		head.appendChild(script);
-		// Move script on proper position
-		head.insertBefore(script,head.childNodes[position]);
+	var head;
+	var script;
+	var referenceNode;
 
-		script.onload = function(){
-			if(typeof callback == 'function') {
-				callback(jQuery);
-			}
-		};
-	} else {
-		if(typeof callback == 'function') {
-			callback(jQuery);
+	url = url || 'https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js';
+	position = Number.isInteger(position) ? position : 0;
+
+	if (window.jQuery) {
+		if (typeof callback === 'function') {
+			callback(window.jQuery);
 		}
+
+		return;
 	}
-}();
+
+	head = document.head || document.getElementsByTagName('head')[0];
+
+	if (!head) {
+		return;
+	}
+
+	script = document.createElement('script');
+	script.src = url;
+	script.type = 'text/javascript';
+	script.async = true;
+
+	script.onload = function () {
+		if (window.jQuery && typeof callback === 'function') {
+			callback(window.jQuery);
+		}
+	};
+
+	script.onerror = function () {
+		if (window.console && typeof window.console.error === 'function') {
+			window.console.error('Failed to load jQuery from: ' + url);
+		}
+	};
+
+	referenceNode = head.childNodes[position] || null;
+	head.insertBefore(script, referenceNode);
+}(
+	'https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js',
+	0,
+	function ($) {
+		'use strict';
+
+		// Your jQuery code here.
+		console.log($.fn.jquery);
+	}
+));
